@@ -1,0 +1,40 @@
+services:
+  db-tasks:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: tasks_db
+      POSTGRES_PASSWORD: mysecretpassword
+    networks:
+      - task-network
+
+  db-users:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_PASSWORD: mysecretpassword
+    networks:
+      - task-network
+
+  service-tasks:
+    build:
+      context: ./serviceTasks
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db-tasks
+    networks:
+      - task-network
+
+  service-users:
+    build:
+      context: ./serviceUsers
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db-users
+    networks:
+      - task-network
+
+networks:
+  task-network:
+    driver: bridge
