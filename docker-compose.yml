@@ -18,8 +18,6 @@ services:
   service-tasks:
     build:
       context: ./serviceTasks
-    ports:
-      - "8081:8081"
     depends_on:
       - db-tasks
     networks:
@@ -28,10 +26,18 @@ services:
   service-users:
     build:
       context: ./serviceUsers
-    ports:
-      - "8080:8080"
     depends_on:
       - db-users
+    networks:
+      - task-network
+
+  api-gateway:
+    build: ./APIGateway
+    ports:
+      - "8000:8080"
+    depends_on:
+      - service-users
+      - service-tasks
     networks:
       - task-network
 

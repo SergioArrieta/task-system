@@ -20,6 +20,7 @@
     <modules>
         <module>serviceTasks</module>
         <module>serviceUsers</module>
+        <module>APIGateway</module>
     </modules>
 
     <dependencies>
