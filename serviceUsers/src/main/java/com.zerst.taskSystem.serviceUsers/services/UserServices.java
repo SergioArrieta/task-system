@@ -2,11 +2,11 @@ package com.zerst.taskSystem.serviceUsers.services;
 
 import com.zerst.taskSystem.serviceUsers.controller.CreateUserRequest;
 import com.zerst.taskSystem.serviceUsers.entities.User;
-import com.zerst.taskSystem.serviceUsers.exceptions.ExternalServiceException;
 import com.zerst.taskSystem.serviceUsers.exceptions.UserNotFoundException;
 import com.zerst.taskSystem.serviceUsers.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -20,13 +20,14 @@ public class UserServices {
 
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     @Value("${task.service.url}")
     private String taskServiceUrl;
 
-    public UserServices(UserRepository userRepository, RestTemplate restTemplate) {
+    public UserServices(UserRepository userRepository, RestTemplate restTemplate, KafkaTemplate<String, String> kafkaTemplate) {
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
-
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -40,7 +41,6 @@ public class UserServices {
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream().map(User::toDTO).collect(Collectors.toList());
     }
-
 
     @Transactional
     public UserDTO createUser(CreateUserRequest request) {
@@ -70,12 +70,7 @@ public class UserServices {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(String.format("User id:%s was not found", id));
         }
-        try {
-            restTemplate.delete(taskServiceUrl + "/user/" + id);
-        } catch (Exception e) {
-            log.error("Tasks from user could not be deleted {}", e.getMessage());
-            throw new ExternalServiceException("Tasks from user could not be deleted " + e.getMessage());
-        }
         userRepository.deleteById(id);
+        kafkaTemplate.send("user-events", id.toString());
     }
 }

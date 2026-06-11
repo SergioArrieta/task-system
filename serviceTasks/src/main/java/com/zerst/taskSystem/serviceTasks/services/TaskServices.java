@@ -25,7 +25,6 @@ public class TaskServices {
     @Value("${user.service.url}")
     private String userServiceUrl;
 
-    // inyeccion por constructor
     public TaskServices(TaskRepository taskRepository, RestTemplate restTemplate) {
         this.taskRepository = taskRepository;
         this.restTemplate = restTemplate;
